@@ -5,12 +5,21 @@ import tornado.database
 import json
 
 
+class Application(tornado.web.Application):
+    def __init__(self):
+        handlers = [
+            (r"/api/service", ServiceHandler)
+        ]
+        super(Application, self).__init__(handlers)
+        self.db = tornado.database.Connection(
+            host='localhost', database='project', user='root', password=''
+        )
+
+
 class ServiceHandler(tornado.web.RequestHandler):
     @property
     def db(self):
-        return tornado.database.Connection(
-            host='localhost', database='project', user='root', password=''
-        )
+        return self.application.db
 
     def get(self):
         query = self.db.query("SELECT * FROM services")
@@ -29,11 +38,6 @@ class ServiceHandler(tornado.web.RequestHandler):
         self.write(json.dumps(services))
 
 
-application = tornado.web.Application([
-    (r"/api/service", ServiceHandler),
-])
-
-
 if __name__ == "__main__":
-    application.listen(8888)
+    Application().listen(8888)
     tornado.ioloop.IOLoop.instance().start()
